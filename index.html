@@ -473,8 +473,7 @@
 
 </div><!-- /#app -->
 
-<script type="module">
-  import { supabase } from './supabaseClient.js';
+<script>
   // ─────────────────────────────────────────────
   //  STATE
   // ─────────────────────────────────────────────
@@ -548,15 +547,11 @@
     if (!validateEmail(email)) { showError('loginError', 'Please enter a valid email address.'); return; }
 
     setLoading('loginBtn', true, 'Signing in');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    await sleep(1400);
     setLoading('loginBtn', false, 'Sign In');
 
-    if (error) {
-      showError('loginError', error.message || 'Invalid email or password. Please try again.');
-      return;
-    }
-
-    window.location.href = '/dashboard';
+    // TODO: const { error } = await supabase.auth.signInWithPassword({ email, password });
+    showError('loginError', 'Invalid email or password. Please try again.');
   }
 
   // ─────────────────────────────────────────────
@@ -573,14 +568,11 @@
     if (password.length < 8)       { showError('signupError', 'Password must be at least 8 characters.'); return; }
 
     setLoading('signupBtn', true, 'Creating account');
-    const { error } = await supabase.auth.signUp({ email, password });
+    await sleep(1400);
     setLoading('signupBtn', false, 'Create Account');
-    if (error) {
-      showError('signupError', error.message || 'Unable to create account. Please try again.');
-      return;
-    }
 
-    showSuccess('signupSuccess', 'Account created. Check your email if confirmation is required.');
+    // TODO: const { error } = await supabase.auth.signUp({ email, password });
+    showSuccess('signupSuccess', '✓ Verification code sent to your email.');
   }
 
   // ─────────────────────────────────────────────
@@ -592,15 +584,12 @@
 
     if (!email)                { showError('forgotEmailError', 'Please enter your email address.'); return; }
     if (!validateEmail(email)) { showError('forgotEmailError', 'Please enter a valid email address.'); return; }
+
     setLoading('forgotNextBtn', true, 'Sending code');
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    await sleep(1300);
     setLoading('forgotNextBtn', false, 'Next');
 
-    if (error) {
-      showError('forgotEmailError', error.message || 'Could not send reset email.');
-      return;
-    }
-
+    // TODO: await supabase.auth.resetPasswordForEmail(email);
     document.getElementById('otpEmailDisplay').textContent = email;
     showView('viewForgotOTP');
   }
