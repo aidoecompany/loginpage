@@ -599,7 +599,11 @@
 
     if (error) {
       setLoading('loginBtn', false, 'Sign In');
-      showError('loginError', error.message || 'Invalid email or password. Please try again.');
+      const message =
+        error.message && error.message.toLowerCase().includes('confirm')
+          ? 'Please confirm your email, or use the email login link.'
+          : error.message || 'Invalid email or password. Please try again.';
+      showError('loginError', message);
       return;
     }
 
@@ -650,7 +654,11 @@
     if (password.length < 8)       { showError('signupError', 'Password must be at least 8 characters.'); return; }
 
     setLoading('signupBtn', true, 'Creating account');
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: DASHBOARD_BRIDGE_URL },
+    });
     setLoading('signupBtn', false, 'Create Account');
 
     if (error) {
