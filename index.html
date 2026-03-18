@@ -417,7 +417,6 @@
       </div>
 
       <div class="banner-error" id="forgotEmailError"></div>
-      <div class="banner-success" id="forgotEmailSuccess"></div>
 
       <button class="btn-primary" id="forgotNextBtn" onclick="handleForgotNext()">
         Next
@@ -467,29 +466,6 @@
       </p>
     </div>
 
-    <!-- ════════════════════════════════════════
-         VIEW: RESET PASSWORD
-    ════════════════════════════════════════ -->
-    <div class="view" id="viewResetPassword">
-      <div class="field">
-        <label class="field-label">New Password</label>
-        <input class="field-input" type="password" id="resetPassword"
-               placeholder="Min. 8 characters" autocomplete="new-password" />
-      </div>
-      <div class="field">
-        <label class="field-label">Confirm Password</label>
-        <input class="field-input" type="password" id="resetPasswordConfirm"
-               placeholder="Re-enter password" autocomplete="new-password" />
-      </div>
-
-      <div class="banner-error" id="resetError"></div>
-      <div class="banner-success" id="resetSuccess"></div>
-
-      <button class="btn-primary" id="resetBtn" onclick="handleResetPassword()">
-        Update Password
-      </button>
-    </div>
-
   </div><!-- /.card -->
 
   <!-- ── Footer ─────────────────────────────── -->
@@ -497,20 +473,7 @@
 
 </div><!-- /#app -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = "https://rttugjwsfmbihrviwbfn.supabase.co";
-  const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0dHVnandzZm1iaWhydml3YmZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODQxMDksImV4cCI6MjA4NTk2MDEwOX0.0Wjf4EswFsqI2lV41yMwqSL2MRe6qQ-k5tFl_Jevgjk";
-  const DASHBOARD_BRIDGE_URL = "https://dashboard2-0-black.vercel.app/auth/bridge";
-
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  function buildBridgeUrl(session) {
-    const access = encodeURIComponent(session.access_token);
-    const refresh = encodeURIComponent(session.refresh_token);
-    return `${DASHBOARD_BRIDGE_URL}#access_token=${access}&refresh_token=${refresh}`;
-  }
   // ─────────────────────────────────────────────
   //  STATE
   // ─────────────────────────────────────────────
@@ -519,7 +482,6 @@
     viewSignup:      { title: 'Create account',      sub: 'Get started with Recuria today' },
     viewForgotEmail: { title: 'Reset password',      sub: 'Enter your email to continue' },
     viewForgotOTP:   { title: 'Check your email',    sub: 'A code is waiting for you' },
-    viewResetPassword:{ title: 'Set new password',  sub: 'Create a new password for your account' },
   };
 
   // ─────────────────────────────────────────────
@@ -573,30 +535,6 @@
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  function getHashParams() {
-    const hash = window.location.hash?.replace(/^#/, '');
-    return new URLSearchParams(hash || '');
-  }
-
-  async function handleRecoveryIfPresent() {
-    const params = getHashParams();
-    const type = params.get('type');
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-
-    if (type === 'recovery' && accessToken && refreshToken) {
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-
-      if (!error) {
-        window.history.replaceState({}, document.title, '/');
-        showView('viewResetPassword');
-      }
-    }
-  }
-
   // ─────────────────────────────────────────────
   //  LOGIN
   // ─────────────────────────────────────────────
@@ -609,27 +547,12 @@
     if (!validateEmail(email)) { showError('loginError', 'Please enter a valid email address.'); return; }
 
     setLoading('loginBtn', true, 'Signing in');
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    await sleep(1400);
+    setLoading('loginBtn', false, 'Sign In');
 
-    if (error) {
-      setLoading('loginBtn', false, 'Sign In');
-      showError('loginError', error.message || 'Invalid email or password. Please try again.');
-      return;
-    }
-
-    const session = data && data.session ? data.session : null;
-    if (!session) {
-      setLoading('loginBtn', false, 'Sign In');
-      showError('loginError', 'Login succeeded but no session was returned. Please try again.');
-      return;
-    }
-
-    window.location.href = buildBridgeUrl(session);
+    // TODO: const { error } = await supabase.auth.signInWithPassword({ email, password });
+    showError('loginError', 'Invalid email or password. Please try again.');
   }
-
 
   // ─────────────────────────────────────────────
   //  SIGNUP
@@ -645,15 +568,11 @@
     if (password.length < 8)       { showError('signupError', 'Password must be at least 8 characters.'); return; }
 
     setLoading('signupBtn', true, 'Creating account');
-    const { error } = await supabase.auth.signUp({ email, password });
+    await sleep(1400);
     setLoading('signupBtn', false, 'Create Account');
 
-    if (error) {
-      showError('signupError', error.message || 'Unable to create account. Please try again.');
-      return;
-    }
-
-    showSuccess('signupSuccess', '✓ Check your email to confirm your account.');
+    // TODO: const { error } = await supabase.auth.signUp({ email, password });
+    showSuccess('signupSuccess', '✓ Verification code sent to your email.');
   }
 
   // ─────────────────────────────────────────────
@@ -666,48 +585,13 @@
     if (!email)                { showError('forgotEmailError', 'Please enter your email address.'); return; }
     if (!validateEmail(email)) { showError('forgotEmailError', 'Please enter a valid email address.'); return; }
 
-    setLoading('forgotNextBtn', true, 'Sending link');
-    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/` : undefined;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    setLoading('forgotNextBtn', true, 'Sending code');
+    await sleep(1300);
     setLoading('forgotNextBtn', false, 'Next');
 
-    if (error) {
-      showError('forgotEmailError', error.message || 'Could not send reset email.');
-      return;
-    }
-
-    showSuccess('forgotEmailSuccess', '✓ Reset link sent. Check your email to continue.');
-  }
-
-  async function handleResetPassword() {
-    hideError('resetError');
-    const password = document.getElementById('resetPassword').value;
-    const confirm = document.getElementById('resetPasswordConfirm').value;
-
-    if (!password || !confirm) {
-      showError('resetError', 'Please fill in both password fields.');
-      return;
-    }
-    if (password.length < 8) {
-      showError('resetError', 'Password must be at least 8 characters.');
-      return;
-    }
-    if (password !== confirm) {
-      showError('resetError', 'Passwords do not match.');
-      return;
-    }
-
-    setLoading('resetBtn', true, 'Updating');
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading('resetBtn', false, 'Update Password');
-
-    if (error) {
-      showError('resetError', error.message || 'Could not update password.');
-      return;
-    }
-
-    showSuccess('resetSuccess', '✓ Password updated. You can now sign in.');
-    showView('viewLogin');
+    // TODO: await supabase.auth.resetPasswordForEmail(email);
+    document.getElementById('otpEmailDisplay').textContent = email;
+    showView('viewForgotOTP');
   }
 
   // ─────────────────────────────────────────────
@@ -749,8 +633,6 @@
     document.getElementById('otp'+lastFilled).focus();
   });
 
-  handleRecoveryIfPresent();
-
   // ─────────────────────────────────────────────
   //  FORGOT — STEP 2: Verify OTP
   // ─────────────────────────────────────────────
@@ -762,23 +644,15 @@
     setLoading('otpVerifyBtn', true, 'Verifying');
     await sleep(1400);
     setLoading('otpVerifyBtn', false, 'Verify Code');
-    showError('otpError', 'Please use the password reset link sent to your email.');
+
+    // TODO: const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+    showSuccess('otpSuccess', '✓ Code verified! Redirecting…');
   }
 
   async function handleResendOTP() {
     const email = document.getElementById('forgotEmail').value.trim();
-    if (!email) {
-      showError('otpError', 'Enter your email and request a reset link.');
-      return;
-    }
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) {
-      showError('otpError', error.message || 'Could not resend reset link.');
-      return;
-    }
-
-    showSuccess('otpSuccess', 'Reset link sent. Check your email.');
+    // TODO: await supabase.auth.resetPasswordForEmail(email);
+    showSuccess('otpSuccess', '✓ A new code has been sent to your email.');
   }
 </script>
 </body>
