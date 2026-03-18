@@ -467,6 +467,29 @@
       </p>
     </div>
 
+    <!-- ════════════════════════════════════════
+         VIEW: RESET PASSWORD
+    ════════════════════════════════════════ -->
+    <div class="view" id="viewResetPassword">
+      <div class="field">
+        <label class="field-label">New Password</label>
+        <input class="field-input" type="password" id="resetPassword"
+               placeholder="Min. 8 characters" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label class="field-label">Confirm Password</label>
+        <input class="field-input" type="password" id="resetPasswordConfirm"
+               placeholder="Re-enter password" autocomplete="new-password" />
+      </div>
+
+      <div class="banner-error" id="resetError"></div>
+      <div class="banner-success" id="resetSuccess"></div>
+
+      <button class="btn-primary" id="resetBtn" onclick="handleResetPassword()">
+        Update Password
+      </button>
+    </div>
+
   </div><!-- /.card -->
 
   <!-- ── Footer ─────────────────────────────── -->
@@ -496,6 +519,7 @@
     viewSignup:      { title: 'Create account',      sub: 'Get started with Recuria today' },
     viewForgotEmail: { title: 'Reset password',      sub: 'Enter your email to continue' },
     viewForgotOTP:   { title: 'Check your email',    sub: 'A code is waiting for you' },
+    viewResetPassword:{ title: 'Set new password',  sub: 'Create a new password for your account' },
   };
 
   // ─────────────────────────────────────────────
@@ -548,6 +572,30 @@
   }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function getHashParams() {
+    const hash = window.location.hash?.replace(/^#/, '');
+    return new URLSearchParams(hash || '');
+  }
+
+  async function handleRecoveryIfPresent() {
+    const params = getHashParams();
+    const type = params.get('type');
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+
+    if (type === 'recovery' && accessToken && refreshToken) {
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+
+      if (!error) {
+        window.history.replaceState({}, document.title, '/');
+        showView('viewResetPassword');
+      }
+    }
+  }
 
   // ─────────────────────────────────────────────
   //  LOGIN
@@ -619,7 +667,8 @@
     if (!validateEmail(email)) { showError('forgotEmailError', 'Please enter a valid email address.'); return; }
 
     setLoading('forgotNextBtn', true, 'Sending link');
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/` : undefined;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     setLoading('forgotNextBtn', false, 'Next');
 
     if (error) {
@@ -628,6 +677,37 @@
     }
 
     showSuccess('forgotEmailSuccess', '✓ Reset link sent. Check your email to continue.');
+  }
+
+  async function handleResetPassword() {
+    hideError('resetError');
+    const password = document.getElementById('resetPassword').value;
+    const confirm = document.getElementById('resetPasswordConfirm').value;
+
+    if (!password || !confirm) {
+      showError('resetError', 'Please fill in both password fields.');
+      return;
+    }
+    if (password.length < 8) {
+      showError('resetError', 'Password must be at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      showError('resetError', 'Passwords do not match.');
+      return;
+    }
+
+    setLoading('resetBtn', true, 'Updating');
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading('resetBtn', false, 'Update Password');
+
+    if (error) {
+      showError('resetError', error.message || 'Could not update password.');
+      return;
+    }
+
+    showSuccess('resetSuccess', '✓ Password updated. You can now sign in.');
+    showView('viewLogin');
   }
 
   // ─────────────────────────────────────────────
@@ -668,6 +748,8 @@
     const lastFilled = Math.min(pasted.length - 1, 3);
     document.getElementById('otp'+lastFilled).focus();
   });
+
+  handleRecoveryIfPresent();
 
   // ─────────────────────────────────────────────
   //  FORGOT — STEP 2: Verify OTP
