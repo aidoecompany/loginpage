@@ -160,6 +160,27 @@
     .btn-primary:active { transform: translateY(0); }
     .btn-primary:disabled { background: var(--grey-3); cursor: not-allowed; transform: none; box-shadow: none; }
 
+    .btn-secondary {
+      font-family: var(--ff-sans);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      background: #f1f1ef;
+      color: var(--black);
+      border: 1px solid var(--grey-4);
+      border-radius: 10px;
+      padding: 12px 0;
+      width: 100%;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-secondary:hover { background: #e7e7e4; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    .btn-secondary:active { transform: translateY(0); }
+    .btn-secondary:disabled { background: var(--grey-4); cursor: not-allowed; transform: none; box-shadow: none; }
+
     .btn-ghost {
       font-family: var(--ff-sans);
       font-size: 12px;
@@ -353,7 +374,8 @@
                placeholder="••••••••" autocomplete="current-password" />
       </div>
 
-      <div class="banner-error" id="loginError"></div>
+    <div class="banner-error" id="loginError"></div>
+    <div class="banner-success" id="loginSuccess"></div>
 
       <div class="forgot-row">
         <button class="btn-ghost" onclick="showView('viewForgotEmail')">Forgot password?</button>
@@ -361,6 +383,10 @@
 
       <button class="btn-primary" id="loginBtn" onclick="handleLogin()">
         Sign In
+      </button>
+
+      <button class="btn-secondary" id="magicBtn" onclick="handleMagicLink()">
+        Email me a login link
       </button>
 
       <p class="switch-text">
@@ -538,6 +564,10 @@
     const el = document.getElementById(id);
     el.textContent = msg; el.classList.add('show');
   }
+  function hideSuccess(id) {
+    const el = document.getElementById(id);
+    el.textContent = ''; el.classList.remove('show');
+  }
 
   function setLoading(btnId, loading, defaultText) {
     const btn = document.getElementById(btnId);
@@ -554,6 +584,7 @@
   // ─────────────────────────────────────────────
   async function handleLogin() {
     hideError('loginError');
+    hideSuccess('loginSuccess');
     const email    = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
 
@@ -580,6 +611,29 @@
     }
 
     window.location.href = buildBridgeUrl(session);
+  }
+
+  async function handleMagicLink() {
+    hideError('loginError');
+    hideSuccess('loginSuccess');
+    const email = document.getElementById('loginEmail').value.trim();
+
+    if (!email) { showError('loginError', 'Please enter your email address.'); return; }
+    if (!validateEmail(email)) { showError('loginError', 'Please enter a valid email address.'); return; }
+
+    setLoading('magicBtn', true, 'Sending link');
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: DASHBOARD_BRIDGE_URL },
+    });
+    setLoading('magicBtn', false, 'Email me a login link');
+
+    if (error) {
+      showError('loginError', error.message || 'Could not send login link. Please try again.');
+      return;
+    }
+
+    showSuccess('loginSuccess', '✓ Check your email for the login link.');
   }
 
   // ─────────────────────────────────────────────
