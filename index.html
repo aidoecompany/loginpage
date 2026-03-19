@@ -571,7 +571,6 @@
     await sleep(1400);
     setLoading('signupBtn', false, 'Create Account');
 
-    // TODO: const { error } = await supabase.auth.signUp({ email, password });
     showSuccess('signupSuccess', '✓ Verification code sent to your email.');
   }
 
@@ -645,15 +644,14 @@
     await sleep(1400);
     setLoading('otpVerifyBtn', false, 'Verify Code');
 
-    // TODO: const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
     showSuccess('otpSuccess', '✓ Code verified! Redirecting…');
   }
 
   async function handleResendOTP() {
     const email = document.getElementById('forgotEmail').value.trim();
-    // TODO: await supabase.auth.resetPasswordForEmail(email);
     showSuccess('otpSuccess', '✓ A new code has been sent to your email.');
   }
 </script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
