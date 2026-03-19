@@ -598,7 +598,10 @@
     if (error) {
       showError('loginError', 'Invalid email or password. Please try again.');
     } else {
-      window.location.href = 'https://dashboard2-0-black.vercel.app/';
+const { data: { session } } = await supabase.auth.getSession();
+const token = session?.access_token;
+const refresh = session?.refresh_token;
+window.location.href = `https://dashboard2-0-black.vercel.app/?access_token=${token}&refresh_token=${refresh}`;  
     }
   };
 
