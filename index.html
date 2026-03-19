@@ -598,11 +598,11 @@
   function otpInput(el, idx) {
     // Allow only digits
     el.value = el.value.replace(/\D/g, '').slice(-1);
-    if (el.value && idx < 3) {
+    if (el.value && idx < 7) {
       document.getElementById('otp' + (idx + 1)).focus();
     }
     // Auto-submit when all 4 filled
-    const all = [0,1,2,3].map(i => document.getElementById('otp'+i).value);
+    const all = [0,1,2,3,4,5,6,7].map(i => document.getElementById('otp'+i).value);
     if (all.every(v => v !== '')) handleOTPVerify();
   }
 
