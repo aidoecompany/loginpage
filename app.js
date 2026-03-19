@@ -1,5 +1,13 @@
 import { supabase } from "./supabaseClient.js";
 
+async function test() {
+  console.log("Supabase test start");
+
+  const { data, error } = await supabase.auth.getSession();
+  console.log("Session:", data, error);
+}
+
+test();
 // ─────────────────────────────
 // LOGIN
 // ─────────────────────────────
